@@ -49,7 +49,7 @@ minLat=fire.X.min()
 #Obtaining the map
 def get_map():
     map_extent = [minLat, minLon, maxLat, maxLon]
-    map_extent= [50.96, -2.36, 52.16, 0.9022]
+    map_extent= [50.96, -2.36, 50.16, 0.9122]
     m = Basemap(llcrnrlon=map_extent[1], llcrnrlat=map_extent[0],
                 urcrnrlon=map_extent[3], urcrnrlat=map_extent[2],
                 resolution='f', epsg=4269)
@@ -145,9 +145,9 @@ def generate_plots(df, m, bin_size, min_bins):
     m.drawmapboundary(fill_color='aqua')
     m.fillcontinents(color=(0.25, 0.25, 0.25), zorder=0)
     m.drawparallels(latitudes, color='white', labels=[1, 0, 0, 0],
-                    dashes=[5, 5], linewidth=.25)
+                    dashes=[5, 5], linewidth=0.75)
     m.drawmeridians(longitudes, color='white', labels=[0, 0, 0, 1],
-                    dashes=[5, 5], linewidth=.25)
+                    dashes=[5, 5], linewidth=0.75)
                     
     n_colors = top_counts_less.shape[0]
     colors = b2mpl.get_map('BuPu', 'Sequential', n_colors).mpl_colors
@@ -213,9 +213,9 @@ def generate_plots(df, m, bin_size, min_bins):
     m.drawmapboundary(fill_color='aqua')
     m.fillcontinents(color=(0.25, 0.25, 0.25), zorder=0)
     m.drawparallels(latitudes, color='white', labels=[1, 0, 0, 0],
-                    dashes=[5, 5], linewidth=.25)
+                    dashes=[5, 5], linewidth=.75)
     m.drawmeridians(longitudes, color='white', labels=[0, 0, 0, 1],
-                    dashes=[5, 5], linewidth=.25)
+                    dashes=[5, 5], linewidth=.75)
     #m.scatter(fire.X, fire.Y)
     m.pcolormesh(X, Y, entropy_diff_ma, cmap='BuPu', alpha=0.75,
                  edgecolor='None', vmin=-max_abs, vmax=max_abs)
