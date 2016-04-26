@@ -49,6 +49,7 @@ minLat=fire.X.min()
 #Obtaining the map
 def get_map():
     map_extent = [minLat, minLon, maxLat, maxLon]
+    map_extent= [50.96, -2.36, 52.16, 0.9022]
     m = Basemap(llcrnrlon=map_extent[1], llcrnrlat=map_extent[0],
                 urcrnrlon=map_extent[3], urcrnrlat=map_extent[2],
                 resolution='f', epsg=4269)
@@ -137,10 +138,10 @@ def generate_plots(df, m, bin_size, min_bins):
     top_counts = sorted_counts[sorted_counts[:, 1] >= min_bins, :]
     top_counts_less = top_counts[1:, :]
     
-    # Plotting preferences  
+    ####### Plotting preferences  
     
     # m.arcgisimage(service='Canvas/World_Dark_Gray_Base', xpixels=1500)
-    plt.figure(figsize=(14, 14))    
+    plt.figure(figsize=(16,18))    
     m.drawmapboundary(fill_color='aqua')
     m.fillcontinents(color=(0.25, 0.25, 0.25), zorder=0)
     m.drawparallels(latitudes, color='white', labels=[1, 0, 0, 0],
@@ -155,7 +156,7 @@ def generate_plots(df, m, bin_size, min_bins):
         recoded[winner == categ_num] = i
 
     winner_ma = np.ma.masked_where(recoded == 0, recoded)
-    m.pcolormesh(Y, X, winner_ma,
+    m.pcolormesh(X, Y, winner_ma,
                  cmap=mpl_colors.ListedColormap(colors))
 
     winner_ma = np.ma.masked_where(
@@ -187,17 +188,17 @@ def generate_plots(df, m, bin_size, min_bins):
     texts[0].set_fontsize(10)
     texts[0].set_color('white')
     for t, c in zip(texts[1:], legend_edgecolors):
-        t.set_fontsize(10)
+        t.set_fontsize(14)
         t.set_color(c)
 
     plt.title("Most likely fire (specified by affected property type) \n"
               "given knowledge of location only,\n"
               "taking into account the prior fire probability\n",
-              fontsize=16)
+              fontsize=14)
     plt.savefig('Type_output.png')
 
     #### Entropy difference plot
-    plt.figure(figsize=(14, 14))
+    plt.figure(figsize=(16,18))
 
     entropy_diff_ma = np.ma.masked_where(mask, entropy_diff)
     max_diff = np.max(entropy_diff_ma)
@@ -216,12 +217,12 @@ def generate_plots(df, m, bin_size, min_bins):
     m.drawmeridians(longitudes, color='white', labels=[0, 0, 0, 1],
                     dashes=[5, 5], linewidth=.25)
     #m.scatter(fire.X, fire.Y)
-    m.pcolormesh(Y, X, entropy_diff_ma, cmap='BuPu', alpha=0.75,
+    m.pcolormesh(X, Y, entropy_diff_ma, cmap='BuPu', alpha=0.75,
                  edgecolor='None', vmin=-max_abs, vmax=max_abs)
     cbar = plt.colorbar(shrink=0.25)
     cbar.solids.set_edgecolor("face")
 
     plt.title('Entropy of prior distribution minus entropy of posterior distribution:\n'
               'positive values indicate less uncertainty about fire type '
-              'after observing location', fontsize=16)
+              'after observing location', fontsize=14)
     plt.savefig('Entropy.png')
