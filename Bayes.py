@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
 """
-Created on Mon Apr 25 18:08:03 2016
+Created on Mon Apr 25 
+Tania Sanchez Monroy
 
-@author: mbgnkts2
 """
+
+#Loading modules, parameters, etc.
 
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -14,7 +16,17 @@ import brewer2mpl as b2mpl
 import numpy as np
 from scipy.stats import itemfreq
 
-#Create a dataframe to save the position of the fires
+#Import data LFB 
+dateparse = (lambda x: pd.to_datetime(x, format='%d-%b-%y'))
+fire=pd.read_csv('LFB.csv', parse_dates=['DateOfCall'], 
+               date_parser=dateparse)
+
+#Obtain the years from the date of call and create a column
+fire['Year'] = fire['DateOfCall'].map(lambda x: x.year)              
+
+#Create a dataframe to save the position of the fires since the location of
+#the fires are identified using BNG it is convenient to get the latitutde
+#and longitude coordinates later
 BNG=pd.DataFrame()
 BNG['East']= fire.Easting_rounded
 BNG['North']=fire.Northing_rounded
@@ -24,11 +36,6 @@ BNG.to_csv('BNG.csv', sep=',', lineterminator='\n', index=None, low_memory=True)
 #now need to convert those BNG to latitude and longitude
 execfile('BNGlatlon.py')
 
-#Import data LFB
-dateparse = (lambda x: pd.to_datetime(x, format='%d-%b-%y'))
-fire=pd.read_csv('LFB.csv', parse_dates=['DateOfCall'], 
-               date_parser=dateparse)
-               
 #Import csv file with the coordinates in latitude and longitude
 coord=pd.read_csv('BNGandLAtLon.csv')
 
@@ -36,32 +43,32 @@ coord=pd.read_csv('BNGandLAtLon.csv')
 fire['Y']=coord.Lat
 fire['X']=coord.Lon
 
-#remove any outliers
+#Remove outliers 
 fire= fire[fire.X>-2]
 fire=fire[fire.Y<51.8]
 
-#find mapping boundaries
-maxLon=fire.Y.max()
-minLon=fire.Y.min()
-maxLat=fire.X.max()
-minLat=fire.X.min()
+#Find mapping boundaries
+maxLon=fire.X.max()
+minLon=fire.X.min()
+maxLat=fire.Y.max()
+minLat=fire.Y.min()
 
 #Obtaining the map
 def get_map():
     map_extent = [minLat, minLon, maxLat, maxLon]
-    map_extent= [50.96, -2.36, 50.16, 0.9122]
+    #map_extent= [50.96, -2.36, 50.16, 0.9122]
     m = Basemap(llcrnrlon=map_extent[1], llcrnrlat=map_extent[0],
                 urcrnrlon=map_extent[3], urcrnrlat=map_extent[2],
                 resolution='f', epsg=4269)
     return m
 
-
+#Function to obtain the Plots based on a Bayes multinomial analysis
 def generate_plots(df, m, bin_size, min_bins):
     # Map-related info
     longitudes = np.arange(minLon, maxLon, 0.25)
     latitudes = np.arange(minLat, maxLat, 0.1)
 
-    #some relevant quatities
+    #Relevant quatities
     
     categs = pd.Series(sorted(df['PropertyType'].unique()))
     n_categs = len(categs)
@@ -73,7 +80,7 @@ def generate_plots(df, m, bin_size, min_bins):
 
     # Create the x and y bin edges over which we'll smooth positions.
     # Better approach might be to find optimal bin size through
-    # cross validation based approach.
+    # cross validation based approach (need more time though). 
     bin_edges_x = np.arange(np.min(df['X']) - bin_size / 2,
                             np.max(df['X']) + bin_size / 2,
                             bin_size)
@@ -82,8 +89,10 @@ def generate_plots(df, m, bin_size, min_bins):
                             bin_size)
     overall_hist, yedges, xedges, Img = plt.hist2d(
         df.Y.values, df.X.values, bins=(bin_edges_y, bin_edges_x))   
+
     # We'll assume that fires really only occurs at a location
-    # at which we have seen at least one crime over the period comprising 2012-2015.
+    # at which we have seen at least one fire incidence over 
+    #the period comprising 2012-2015.
     
     # This will help with the plotting
     mask = overall_hist == 0
@@ -136,21 +145,22 @@ def generate_plots(df, m, bin_size, min_bins):
     # at least min_pop_bins bins in which they were the winner
     sorted_counts = counts[np.argsort(counts[:, 1])[::-1], :]
     top_counts = sorted_counts[sorted_counts[:, 1] >= min_bins, :]
-    top_counts_less = top_counts[1:, :]
+    #top_counts_less = top_counts[1:, :]
+    top_counts_less=top_counts
     
     ####### Plotting preferences  
     
     # m.arcgisimage(service='Canvas/World_Dark_Gray_Base', xpixels=1500)
+      m.scatter(fire.X, fire.Y, color='purple')
     plt.figure(figsize=(16,18))    
-    m.drawmapboundary(fill_color='aqua')
+    m.drawmapboundary(fill_color='paleturquoise')
     m.fillcontinents(color=(0.25, 0.25, 0.25), zorder=0)
     m.drawparallels(latitudes, color='white', labels=[1, 0, 0, 0],
                     dashes=[5, 5], linewidth=0.75)
     m.drawmeridians(longitudes, color='white', labels=[0, 0, 0, 1],
                     dashes=[5, 5], linewidth=0.75)
-                    
     n_colors = top_counts_less.shape[0]
-    colors = b2mpl.get_map('BuPu', 'Sequential', n_colors).mpl_colors
+    colors = b2mpl.get_map('Set3', 'Qualitative', n_colors).mpl_colors
     recoded = np.zeros(winner.shape)
     for i, categ_num in enumerate(top_counts[:, 0]):
         recoded[winner == categ_num] = i
@@ -158,10 +168,10 @@ def generate_plots(df, m, bin_size, min_bins):
     winner_ma = np.ma.masked_where(recoded == 0, recoded)
     m.pcolormesh(X, Y, winner_ma,
                  cmap=mpl_colors.ListedColormap(colors))
-
+            
     winner_ma = np.ma.masked_where(
         np.logical_or(mask, winner != 16), winner)
-    m.pcolormesh(X, Y, winner_ma, cmap='Greys', alpha=0.75, edgecolor='None')
+    m.pcolormesh(X, Y, winner_ma, cmap='Greys', alpha=0.5, edgecolor='None')
 
     legend_labels = [categs[i] for i in top_counts[:, 0]]
 
@@ -169,7 +179,7 @@ def generate_plots(df, m, bin_size, min_bins):
     # part of the colormap
     legend_markers = []
     legend_markers.append(
-        Rectangle((0, 0), 1, 1, fc='white', ec='white'))
+        Rectangle((0, 0), 1, 1, fc='thistle', ec='thistle'))
 
     # now the other types
     legend_edgecolors = colors
@@ -188,12 +198,12 @@ def generate_plots(df, m, bin_size, min_bins):
     texts[0].set_fontsize(10)
     texts[0].set_color('white')
     for t, c in zip(texts[1:], legend_edgecolors):
-        t.set_fontsize(14)
+        t.set_fontsize(10.5)
         t.set_color(c)
 
     plt.title("Most likely fire (specified by affected property type) \n"
               "given knowledge of location only,\n"
-              "taking into account the prior fire probability\n",
+              "taking into account the prior fire probability\n\n",
               fontsize=14)
     plt.savefig('Type_output.png')
 
@@ -210,7 +220,7 @@ def generate_plots(df, m, bin_size, min_bins):
     #plt.draw()
 
     # m.arcgisimage(service='Canvas/World_Dark_Gray_Base', xpixels=1500)
-    m.drawmapboundary(fill_color='aqua')
+    m.drawmapboundary(fill_color='paleturquoise')
     m.fillcontinents(color=(0.25, 0.25, 0.25), zorder=0)
     m.drawparallels(latitudes, color='white', labels=[1, 0, 0, 0],
                     dashes=[5, 5], linewidth=.75)
@@ -224,5 +234,27 @@ def generate_plots(df, m, bin_size, min_bins):
 
     plt.title('Entropy of prior distribution minus entropy of posterior distribution:\n'
               'positive values indicate less uncertainty about fire type '
-              'after observing location', fontsize=14)
+              'after observing location\n\n', fontsize=14)
     plt.savefig('Entropy.png')
+
+
+    # Now let's plot the most likely type of fire
+    plt.figure(figsize=(16,18)) 
+    house=fire[fire.PropertyType=='House - single occupancy ']
+     
+    m.drawmapboundary(fill_color='paleturquoise')
+    m.fillcontinents(color=(0.25, 0.25, 0.25), zorder=0)
+    m.drawparallels(latitudes, color='white', labels=[1, 0, 0, 0],
+                    dashes=[5, 5], linewidth=0.75)
+    m.drawmeridians(longitudes, color='white', labels=[0, 0, 0, 1],
+                    dashes=[5, 5], linewidth=0.75)
+    m.scatter(house.X, house.Y, marker='s',s=35, color='thistle', alpha=0.40, edgecolor='black',
+              label='House-single occupancy',)
+    legend = plt.legend(fancybox=True, frameon=1, loc='upper left', scatterpoints=1)
+    frame = legend.get_frame()
+    for color,text in zip(colors,legend.get_texts()):
+        text.set_color('Thistle')
+    frame.set_facecolor('black')
+    plt.savefig('Top_property.png')
+    
+    
