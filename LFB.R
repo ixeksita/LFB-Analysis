@@ -2,6 +2,7 @@ library(dplyr)
 library(ggmap)
 library(ggplot2)
 library(readr)
+library(e1071)
 fire<- read.csv("LFB.csv")
 London <- get_map(location=c(-1.25, 51.13, 0.849, 51.76),  color = "bw", maptype = "roadmap", zoom=10)
 
