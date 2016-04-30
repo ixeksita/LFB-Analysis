@@ -2,15 +2,13 @@ library(dplyr)
 library(ggmap)
 library(ggplot2)
 library(readr)
-library(e1071)
 fire<- read.csv("LFB.csv")
 London <- get_map(location=c(-1.25, 51.13, 0.849, 51.76),  color = "bw", maptype = "roadmap", zoom=10)
 
+#Add a column for the years 
 fire$DateOfCall<-as.Date(fire$DateOfCall, format="%d-%b-%y")
 fire["Year"]<-as.numeric(format(fire$DateOfCall,"%y"))
-fire$Year<-as.POSIXlt(fire$Year)+2000
 fire$Year<-fire$Year+2000
-
 
 #Loading the coordinates 
 coord<-read.csv("BNGandLatLon.csv")
@@ -40,6 +38,16 @@ p<-ggmap(London)+
         axis.title.x=element_blank(),
         axis.title.y=element_blank())
 ggsave("London_top_crimes.png", p, width=14, height=10, units='in')
+
+#contour plots
+contour<-stat_density2d(aes(x=Lon, y=Lat, fill=..level..,alpha=..level..)
+                        ,size=0.1,data=filter(fire,PropertyType=='Converted Flat/maisonette - Up to 2 storeys '),
+                        geom='polygon')
+
+cmap<-ggmap(London, extent='device', legend="bottomleft") + contour +
+  scale_alpha_continuous(range=c(0.40,0.75), guide='none') +
+  scale_fill_continuous(low='light blue', high='purple')
+ggsave("London_msn1.png", cmap ,width=14, height=10, units='in')
 
 #prepare the data set, the data corresponding to 2012 will be used for training purposes and the rest 
 #for the actual prediction
