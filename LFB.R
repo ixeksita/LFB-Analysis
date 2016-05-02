@@ -41,13 +41,17 @@ ggsave("London_top_crimes.png", p, width=14, height=10, units='in')
 
 #contour plots
 contour<-stat_density2d(aes(x=Lon, y=Lat, fill=..level..,alpha=..level..)
-                        ,size=0.1,data=filter(fire,PropertyType=='Converted Flat/maisonette - Up to 2 storeys '),
+                        ,size=0.1,data=filter(fire,PropertyType=='Car '),
                         geom='polygon')
 
 cmap<-ggmap(London, extent='device', legend="bottomleft") + contour +
-  scale_alpha_continuous(range=c(0.40,0.75), guide='none') +
-  scale_fill_continuous(low='light blue', high='purple')
-ggsave("London_msn1.png", cmap ,width=14, height=10, units='in')
+  scale_alpha_continuous(range=c(0.3,0.55), guide='none') +
+  scale_fill_continuous(low='light blue', high='dark magenta')
+ggsave("London_car.png", cmap, width=14, height=10, units='in')
+
+#########note add for loop on the property types (unique(top10))
+#### then create a heatmap for each
+#### divide hthe fire in two and run test then final model 
 
 #prepare the data set, the data corresponding to 2012 will be used for training purposes and the rest 
 #for the actual prediction
