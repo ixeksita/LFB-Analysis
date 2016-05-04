@@ -1,7 +1,10 @@
 # -*- coding: utf-8 -*-
 """
-Created on Mon Apr 25 
-Tania Sanchez Monroy
+Created by Tania Sanchez Monroy (April-May 2016)
+Bayes multinomial on the data provided by the London fire brigades
+corresponding to the fire incidents reported between 2012 and 2015
+for more information on the dataset visit: www.london-fire.gov.uk
+https://github.com/ixeksita/LFB-Analysis
 
 """
 
@@ -15,6 +18,7 @@ from matplotlib.patches import Rectangle
 import brewer2mpl as b2mpl
 import numpy as np
 from scipy.stats import itemfreq
+
 
 #Import data LFB 
 dateparse = (lambda x: pd.to_datetime(x, format='%d-%b-%y'))
@@ -116,7 +120,7 @@ def generate_plots(df, m, bin_size, min_bins):
         px_y_ma[:, :, i] = (group_hist_ma + 1.0) / (
             np.sum(group_hist_ma) + n_bins)
             
-    # Put the category prior into the right shape for easy broadcasting.
+    # Present the category prior into the right shape 
     p_y = np.atleast_3d(categ_priors.as_matrix()).reshape(1, 1, n_categs)
     p_y = np.tile(p_y, [len(bin_edges_y) - 1, len(bin_edges_x) - 1, 1])
     p_y_ma = np.ma.masked_where(
@@ -149,16 +153,15 @@ def generate_plots(df, m, bin_size, min_bins):
     top_counts_less=top_counts
     
     ####### Plotting preferences  
-    
-    # m.arcgisimage(service='Canvas/World_Dark_Gray_Base', xpixels=1500)
-      m.scatter(fire.X, fire.Y, color='purple')
-    plt.figure(figsize=(16,18))    
-    m.drawmapboundary(fill_color='paleturquoise')
-    m.fillcontinents(color=(0.25, 0.25, 0.25), zorder=0)
-    m.drawparallels(latitudes, color='white', labels=[1, 0, 0, 0],
-                    dashes=[5, 5], linewidth=0.75)
-    m.drawmeridians(longitudes, color='white', labels=[0, 0, 0, 1],
-                    dashes=[5, 5], linewidth=0.75)
+    plt.figure(figsize=(16,18))
+    m.arcgisimage(service='Canvas/World_Light_Gray_Base', xpixels=1200, ypixels=1000)
+    #plt.figure(figsize=(16,18))    
+    #m.drawmapboundary(fill_color='paleturquoise')
+    #m.fillcontinents(color=(0.25, 0.25, 0.25), zorder=0)
+    #m.drawparallels(latitudes, color='white', labels=[1, 0, 0, 0],
+    #               dashes=[5, 5], linewidth=0.75)
+    #m.drawmeridians(longitudes, color='white', labels=[0, 0, 0, 1],
+    #                dashes=[5, 5], linewidth=0.75)
     n_colors = top_counts_less.shape[0]
     colors = b2mpl.get_map('Set3', 'Qualitative', n_colors).mpl_colors
     recoded = np.zeros(winner.shape)
@@ -167,7 +170,7 @@ def generate_plots(df, m, bin_size, min_bins):
 
     winner_ma = np.ma.masked_where(recoded == 0, recoded)
     m.pcolormesh(X, Y, winner_ma,
-                 cmap=mpl_colors.ListedColormap(colors))
+                 cmap=mpl_colors.ListedColormap(colors), latlon=True)
             
     winner_ma = np.ma.masked_where(
         np.logical_or(mask, winner != 16), winner)
@@ -190,7 +193,7 @@ def generate_plots(df, m, bin_size, min_bins):
                       fc=legend_facecolors[i], ec=legend_edgecolors[i]))
     legend = plt.legend(legend_markers, legend_labels, labelspacing=.075,
                         handlelength=.5, handletextpad=.1,
-                        fancybox=True, frameon=1, loc='upper left')
+                        fancybox=True, frameon=1, loc='lower left')
     frame = legend.get_frame()
     frame.set_facecolor('black')
 
@@ -214,19 +217,17 @@ def generate_plots(df, m, bin_size, min_bins):
     max_diff = np.max(entropy_diff_ma)
     min_diff = np.min(entropy_diff_ma)
     max_abs = np.max([max_diff, np.abs(min_diff)])
-    #m.pcolormesh(X, Y, entropy_diff_ma, cmap='BuPu', alpha=0.75,
-                 #edgecolor='None', vmin=-max_abs, vmax=max_abs)
+    m.pcolormesh(X, Y, entropy_diff_ma, cmap='BuPu', alpha=0.75,
+                 edgecolor='None', vmin=-max_abs, vmax=max_abs)
     
-    #plt.draw()
-
-    # m.arcgisimage(service='Canvas/World_Dark_Gray_Base', xpixels=1500)
-    m.drawmapboundary(fill_color='paleturquoise')
-    m.fillcontinents(color=(0.25, 0.25, 0.25), zorder=0)
-    m.drawparallels(latitudes, color='white', labels=[1, 0, 0, 0],
-                    dashes=[5, 5], linewidth=.75)
-    m.drawmeridians(longitudes, color='white', labels=[0, 0, 0, 1],
-                    dashes=[5, 5], linewidth=.75)
-    #m.scatter(fire.X, fire.Y)
+    m.arcgisimage(service='Canvas/World_Light_Gray_Base', xpixels=1500)
+    #m.drawmapboundary(fill_color='paleturquoise')
+    #m.fillcontinents(color=(0.25, 0.25, 0.25), zorder=0)
+    #m.drawparallels(latitudes, color='white', labels=[1, 0, 0, 0],
+    #                dashes=[5, 5], linewidth=.75)
+    #m.drawmeridians(longitudes, color='white', labels=[0, 0, 0, 1],
+    #                dashes=[5, 5], linewidth=.75)
+    m.scatter(fire.X, fire.Y)
     m.pcolormesh(X, Y, entropy_diff_ma, cmap='BuPu', alpha=0.75,
                  edgecolor='None', vmin=-max_abs, vmax=max_abs)
     cbar = plt.colorbar(shrink=0.25)
@@ -238,23 +239,5 @@ def generate_plots(df, m, bin_size, min_bins):
     plt.savefig('Entropy.png')
 
 
-    # Now let's plot the most likely type of fire
-    plt.figure(figsize=(16,18)) 
-    house=fire[fire.PropertyType=='House - single occupancy ']
-     
-    m.drawmapboundary(fill_color='paleturquoise')
-    m.fillcontinents(color=(0.25, 0.25, 0.25), zorder=0)
-    m.drawparallels(latitudes, color='white', labels=[1, 0, 0, 0],
-                    dashes=[5, 5], linewidth=0.75)
-    m.drawmeridians(longitudes, color='white', labels=[0, 0, 0, 1],
-                    dashes=[5, 5], linewidth=0.75)
-    m.scatter(house.X, house.Y, marker='s',s=35, color='thistle', alpha=0.40, edgecolor='black',
-              label='House-single occupancy',)
-    legend = plt.legend(fancybox=True, frameon=1, loc='upper left', scatterpoints=1)
-    frame = legend.get_frame()
-    for color,text in zip(colors,legend.get_texts()):
-        text.set_color('Thistle')
-    frame.set_facecolor('black')
-    plt.savefig('Top_property.png')
     
     
