@@ -1,4 +1,4 @@
-# LFB-Analysi (London Fire Brigade fire incidences reported between 2012 and 2015)
+# LFB-Analyss (London Fire Brigade fire incidences reported between 2012 and 2015)
 #Created by Tania Sanchez (April-May 2016)
 
 This set of codes contain the python codes used for the exploratory analysis of the LFB data (analysis.py) as well as the code used to predict the type of prperties with a higher risk within the London area.
